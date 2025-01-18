@@ -50,7 +50,6 @@ interface PluginConfig {
   transformOnServe?: (code: string, url: DevServerUrl) => string;
 }
 
-
 interface BackendPlugin extends Plugin {
   config: (config: UserConfig, env: ConfigEnv) => UserConfig;
 }
@@ -66,7 +65,7 @@ let exitHandlersBound = false;
  */
 export default function backend(config: string | string[] | PluginConfig): BackendPlugin {
   const pluginConfig = resolvePluginConfig(config);
-  return resolveBackendPlugin(pluginConfig)
+  return resolveBackendPlugin(pluginConfig);
 }
 
 /**
@@ -115,9 +114,7 @@ function resolveBackendPlugin(pluginConfig: Required<PluginConfig>): BackendPlug
         },
         resolve: {
           alias: Array.isArray(userConfig.resolve?.alias)
-            ? [
-                ...(userConfig.resolve?.alias ?? []),
-              ]
+            ? [...(userConfig.resolve?.alias ?? [])]
             : {
                 ...userConfig.resolve?.alias,
               },
@@ -126,6 +123,12 @@ function resolveBackendPlugin(pluginConfig: Required<PluginConfig>): BackendPlug
     },
     configResolved(config) {
       resolvedConfig = config;
+    },
+    transform(code) {
+      if (resolvedConfig.command === "serve") {
+        code = code.replace(/__backend_vite_placeholder__/g, viteDevServerUrl);
+        return pluginConfig.transformOnServe(code, viteDevServerUrl);
+      }
     },
     configureServer(server) {
       const envDir = resolvedConfig.envDir || process.cwd();
@@ -167,7 +170,7 @@ function resolveBackendPlugin(pluginConfig: Required<PluginConfig>): BackendPlug
               fs
                 .readFileSync(path.join(dirname(), "dev-server-index.html"))
                 .toString()
-                .replace(/{{ APP_URL }}/g, appUrl)
+                .replace(/{{ APP_URL }}/g, appUrl),
             );
           }
 
@@ -286,7 +289,7 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
 
   if (!fs.existsSync(env.VITE_DEV_SERVER_KEY) || !fs.existsSync(env.VITE_DEV_SERVER_CERT)) {
     throw Error(
-      `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_DEV_SERVER_KEY: [${env.VITE_DEV_SERVER_KEY}] and VITE_DEV_SERVER_CERT: [${env.VITE_DEV_SERVER_CERT}].`
+      `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_DEV_SERVER_KEY: [${env.VITE_DEV_SERVER_KEY}] and VITE_DEV_SERVER_CERT: [${env.VITE_DEV_SERVER_CERT}].`,
     );
   }
 
